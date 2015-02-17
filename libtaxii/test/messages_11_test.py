@@ -142,8 +142,6 @@ def round_trip_message(taxii_message, print_xml=False):
     if not isinstance(taxii_message, tm11.TAXIIMessage):
         raise ValueError('taxii_message was not an instance of TAXIIMessage')
 
-    # print '***** Message type = %s; id = %s' % (taxii_message.message_type, taxii_message.message_id)
-
     xml_string = taxii_message.to_xml()
 
     # The old way of validating
@@ -165,9 +163,7 @@ def round_trip_message(taxii_message, print_xml=False):
     except XMLSyntaxError:
         raise
 
-    if not result.valid:
-        errors = [item for item in result.error_log]
-        raise Exception('\tFailure of test #1 - XML not schema valid: %s' % errors)
+    assert result.valid is True
 
     if print_xml:
         print etree.tostring(taxii_message.to_etree(), pretty_print=True)
@@ -176,20 +172,10 @@ def round_trip_message(taxii_message, print_xml=False):
     dictionary = taxii_message.to_dict()
     msg_from_dict = tm11.get_message_from_dict(dictionary)
     taxii_message.to_text()  # to_text() returns a string, this just makes sure the call succeeds but doesn't validate the response
-    if taxii_message != msg_from_xml:
-        print '\t Failure of test #2 - running equals w/ debug:'
-        taxii_message.__eq__(msg_from_xml, True)
-        raise Exception('Test #2 failed - taxii_message != msg_from_xml')
 
-    if taxii_message != msg_from_dict:
-        print '\t Failure of test #3 - running equals w/ debug:'
-        taxii_message.__eq__(msg_from_dict, True)
-        raise Exception('Test #3 failed - taxii_message != msg_from_dict')
-
-    if msg_from_xml != msg_from_dict:
-        print '\t Failure of test #4 - running equals w/ debug:'
-        msg_from_xml.__eq__(msg_from_dict, True)
-        raise Exception('Test #4 failed - msg_from_xml != msg_from_dict')
+    assert taxii_message == msg_from_xml
+    assert taxii_message == msg_from_dict
+    assert msg_from_xml == msg_from_dict
 
     # print '***** All tests completed!'
 
@@ -202,32 +188,18 @@ def round_trip_content_block(content_block):
 
     xml_string = content_block.to_xml()
     block_from_xml = tm11.ContentBlock.from_xml(xml_string)
+
     dictionary = content_block.to_dict()
     block_from_dict = tm11.ContentBlock.from_dict(dictionary)
+
     json_string = content_block.to_json()
     block_from_json = tm11.ContentBlock.from_json(json_string)
     content_block.to_text()
 
-    if content_block != block_from_xml:
-        print '\t Failure of test #1 - running equals w/ debug:'
-        content_block.__eq__(block_from_xml, True)
-        raise Exception('Test #1 failed - content_block != block_from_xml')
-
-    if content_block != block_from_dict:
-        print '\t Failure of test #2 - running equals w/ debug:'
-        content_block.__eq__(block_from_dict, True)
-        raise Exception('Test #2 failed - content_block != block_from_dict')
-
-    if block_from_xml != block_from_dict:
-        print '\t Failure of test #3 - running equals w/ debug:'
-        block_from_xml.__eq__(block_from_dict, True)
-        raise Exception('Test #3 failed - block_from_xml != block_from_dict')
-    if block_from_json != block_from_dict:
-        print '\t Failure of test #3 - running equals w/ debug:'
-        block_from_json.__eq__(block_from_dict, True)
-        raise Exception('Test #3 failed - block_from_json != block_from_dict')
-
-    # print '***** All tests completed!'
+    assert content_block == block_from_xml
+    assert content_block == block_from_dict
+    assert block_from_xml == block_from_dict
+    assert block_from_json == block_from_dict
 
 
 class StatusMessageTests(unittest.TestCase):

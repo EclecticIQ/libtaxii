@@ -97,8 +97,8 @@ def round_trip_message(taxii_message):
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', DeprecationWarning)
         valid = tm10.validate_xml(xml_string)
-    if valid is not True:
-        raise Exception('\tFailure of test #1 - XML not schema valid: %s' % valid)
+
+    assert valid is True
 
     # The new way of validating
     sv = SchemaValidator(SchemaValidator.TAXII_10_SCHEMA)
@@ -107,28 +107,16 @@ def round_trip_message(taxii_message):
     except XMLSyntaxError:
         raise
 
-    if not result.valid:
-        errors = [item for item in result.error_log]
-        raise Exception('\tFailure of test #1 - XML not schema valid: %s' % errors)
+    assert result.valid is True
 
     msg_from_xml = tm10.get_message_from_xml(xml_string)
     dictionary = taxii_message.to_dict()
     msg_from_dict = tm10.get_message_from_dict(dictionary)
     taxii_message.to_text()
-    if taxii_message != msg_from_xml:
-        print '\t Failure of test #2 - running equals w/ debug:'
-        taxii_message.__eq__(msg_from_xml, True)
-        raise Exception('Test #2 failed - taxii_message != msg_from_xml')
 
-    if taxii_message != msg_from_dict:
-        print '\t Failure of test #3 - running equals w/ debug:'
-        taxii_message.__eq__(msg_from_dict, True)
-        raise Exception('Test #3 failed - taxii_message != msg_from_dict')
-
-    if msg_from_xml != msg_from_dict:
-        print '\t Failure of test #4 - running equals w/ debug:'
-        msg_from_xml.__eq__(msg_from_dict, True)
-        raise Exception('Test #4 failed - msg_from_xml != msg_from_dict')
+    assert taxii_message == msg_from_xml
+    assert taxii_message == msg_from_dict
+    assert msg_from_xml == msg_from_dict
 
     print '***** All tests completed!'
 
@@ -147,24 +135,10 @@ def round_trip_content_block(content_block):
     block_from_json = tm10.ContentBlock.from_json(json_string)
     content_block.to_text()
 
-    if content_block != block_from_xml:
-        print '\t Failure of test #1 - running equals w/ debug:'
-        content_block.__equals(block_from_xml, True)
-        raise Exception('Test #1 failed - content_block != block_from_xml')
-
-    if content_block != block_from_dict:
-        print '\t Failure of test #2 - running equals w/ debug:'
-        content_block.__eq__(block_from_dict, True)
-        raise Exception('Test #2 failed - content_block != block_from_dict')
-
-    if block_from_xml != block_from_dict:
-        print '\t Failure of test #3 - running equals w/ debug:'
-        block_from_xml.__eq__(block_from_dict, True)
-        raise Exception('Test #3 failed - block_from_xml != block_from_dict')
-    if block_from_json != block_from_dict:
-        print '\t Failure of test #3 - running equals w/ debug:'
-        block_from_json.__eq__(block_from_dict, True)
-        raise Exception('Test #3 failed - block_from_json != block_from_dict')
+    assert content_block == block_from_xml
+    assert content_block == block_from_dict
+    assert block_from_xml == block_from_dict
+    assert block_from_json == block_from_dict
 
     print '***** All tests completed!'
 
@@ -457,15 +431,27 @@ class InboxMessageTests(unittest.TestCase):
 
 class ManageFeedSubscriptionRequestTests(unittest.TestCase):
 
-    def test_feed_subscription_request(self):
+    def test_feed_unsubscribe_request(self):
         manage_feed_subscription_request1 = tm10.ManageFeedSubscriptionRequest(
             message_id=tm10.generate_message_id(),  # Required
             feed_name='SomeFeedName',   # Required
             action=tm10.ACT_UNSUBSCRIBE,  # Required
             subscription_id='SubsId056',  # Required for unsubscribe, prohibited otherwise
-            delivery_parameters=delivery_parameters1)  # Required
+            delivery_parameters=delivery_parameters1  # Required
+        )
 
         round_trip_message(manage_feed_subscription_request1)
+
+
+    def test_feed_subscription_request(self):
+        manage_feed_subscription_request2 = tm10.ManageFeedSubscriptionRequest(
+            message_id = tm10.generate_message_id(),    # Required
+            feed_name = 'SomeFeedName',                 # Required
+            action = tm10.ACT_SUBSCRIBE,                # Required
+            delivery_parameters=delivery_parameters1    # Required
+        )
+
+        round_trip_message(manage_feed_subscription_request2)
 
 
 class ManageFeedSubscriptionResponseTests(unittest.TestCase):
